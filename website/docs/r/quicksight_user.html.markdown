@@ -42,6 +42,7 @@ resource "aws_quicksight_user" "admin" {
   identity_type = "IAM"
   user_role     = "ADMIN"
   iam_arn       = aws_iam_user.admin.arn
+  depends_on    = [aws_iam_user_login_profile.admin]
 }
 ```
 

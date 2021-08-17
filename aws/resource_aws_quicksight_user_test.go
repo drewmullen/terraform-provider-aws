@@ -190,6 +190,32 @@ func testAccCheckQuickSightUserDisappears(v *quicksight.User) resource.TestCheck
 	}
 }
 
+// when user name is set by iam, dont change to null
+// what happens when IAM user name changes
+
+func TestAccAWSQuickSightUser_iam(t *testing.T) {
+	var user quicksight.User
+	rName1 := "tfacctest" + acctest.RandString(10)
+	resourceName1 := "aws_quicksight_user." + rName1
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		ErrorCheck:   testAccErrorCheck(t, quicksight.EndpointsID),
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckQuickSightUserDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAWSQuickSightUserConfigIAMUser(rName1, "fakeemail@example.com"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckQuickSightUserExists(resourceName1, &user),
+					resource.TestCheckResourceAttr(resourceName1, "user_name", rName1),
+					testAccCheckResourceAttrRegionalARN(resourceName1, "arn", "quicksight", fmt.Sprintf("user/default/%s", rName1)),
+				),
+			},
+		},
+	})
+}
+
 func testAccAWSQuickSightUserConfigWithEmail(rName, email string) string {
 	return fmt.Sprintf(`
 data "aws_caller_identity" "current" {}
@@ -200,6 +226,29 @@ resource "aws_quicksight_user" %[1]q {
   email          = %[2]q
   identity_type  = "QUICKSIGHT"
   user_role      = "READER"
+}
+`, rName, email)
+}
+
+func testAccAWSQuickSightUserConfigIAMUser(rName, email string) string {
+	return fmt.Sprintf(`
+data "aws_caller_identity" "current" {}
+
+resource "aws_iam_user" "test" {
+	name          = %[1]q
+	path          = "/"
+	force_destroy = true
+  }
+resource "aws_iam_user_login_profile" "test" {
+	user    = aws_iam_user.test.name
+	pgp_key = "keybase:terraformacctest"
+}
+resource "aws_quicksight_user" "test" {
+	email         = %[2]q
+	identity_type = "IAM"
+	user_role     = "ADMIN"
+	iam_arn       = aws_iam_user.test.arn
+	depends_on    = [aws_iam_user_login_profile.test]
 }
 `, rName, email)
 }

@@ -44,13 +44,10 @@ func resourceAwsQuickSightUser() *schema.Resource {
 			},
 
 			"identity_type": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					quicksight.IdentityTypeIam,
-					quicksight.IdentityTypeQuicksight,
-				}, false),
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.StringInSlice(quicksight.IdentityType_Values(), false),
 			},
 
 			"namespace": {
@@ -76,14 +73,10 @@ func resourceAwsQuickSightUser() *schema.Resource {
 			},
 
 			"user_role": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					quicksight.UserRoleReader,
-					quicksight.UserRoleAuthor,
-					quicksight.UserRoleAdmin,
-				}, false),
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.StringInSlice(quicksight.UserRole_Values(), false),
 			},
 		},
 	}
